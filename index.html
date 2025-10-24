@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RENTCAR Porto Seguro</title>
+<style>
+body {font-family: Arial, sans-serif; margin:0; padding:0; background:#f0f0f0;}
+header {background:#007BFF; color:white; padding:20px; text-align:center;}
+nav a {color:white; margin:0 15px; text-decoration:none; font-weight:bold;}
+section {padding:20px;}
+input, button {padding:10px; margin:5px 0; width:100%; max-width:300px;}
+.container {background:white; padding:20px; margin:20px auto; max-width:500px; border-radius:5px; box-shadow:0 0 10px rgba(0,0,0,0.1);}
+.car-list {display:flex; flex-wrap:wrap; gap:20px; justify-content:center;}
+.car {background:#fff; padding:10px; border-radius:5px; text-align:center; width:200px; box-shadow:0 0 5px rgba(0,0,0,0.1);}
+.car img {width:100%; height:120px; object-fit:cover; border-radius:5px;}
+button {background:#007BFF; color:white; border:none; cursor:pointer; border-radius:5px;}
+button:hover {background:#0056b3;}
+.hidden {display:none;}
+</style>
+</head>
+<body>
+
+<header>
+<h1>RENTCAR Porto Seguro</h1>
+<nav>
+<a href="#home">Home</a>
+<a href="#cars">Carros</a>
+<a href="#reserve">Reserva</a>
+<a href="#login">Login</a>
+</nav>
+</header>
+
+<section id="home">
+<div class="container">
+<h2>Bem-vindo à RENTCAR!</h2>
+<p>Alugue carros com facilidade em Porto Seguro, Bahia.</p>
+</div>
+</section>
+
+<section id="cars">
+<div class="container">
+<h2>Nossos Carros</h2>
+<div class="car-list" id="carList">
+<!-- Carros serão inseridos pelo JS -->
+</div>
+</div>
+</section>
+
+<section id="reserve">
+<div class="container">
+<h2>Reserva de Carro</h2>
+<div id="reserveForm" class="hidden">
+<label>Selecione o carro:</label>
+<select id="selectCar"></select>
+<label>Data de retirada:</label>
+<input type="date" id="pickupDate">
+<label>Data de devolução:</label>
+<input type="date" id="returnDate">
+<button onclick="makeReservation()">Reservar</button>
+</div>
+<p id="reserveMessage"></p>
+</div>
+</section>
+
+<section id="login">
+<div class="container">
+<h2>Login / Cadastro</h2>
+
+<div id="loginDiv">
+<input type="email" id="loginEmail" placeholder="E-mail">
+<input type="password" id="loginPassword" placeholder="Senha">
+<button onclick="loginUser()">Login</button>
+<p>Não tem conta? <a href="#" onclick="showRegister()">Cadastrar</a></p>
+</div>
+
+<div id="registerDiv" class="hidden">
+<input type="text" id="registerName" placeholder="Nome">
+<input type="email" id="registerEmail" placeholder="E-mail">
+<input type="password" id="registerPassword" placeholder="Senha">
+<button onclick="registerUser()">Cadastrar</button>
+<p>Já tem conta? <a href="#" onclick="showLogin()">Login</a></p>
+</div>
+
+<p id="loginMessage"></p>
+</div>
+</section>
+
+<script>
+// Dados de carros
+const cars = [
+{name:"Carro 1", price:"R$100/dia", img:"https://via.placeholder.com/200x120?text=Carro+1"},
+{name:"Carro 2", price:"R$150/dia", img:"https://via.placeholder.com/200x120?text=Carro+2"},
+{name:"Carro 3", price:"R$200/dia", img:"https://via.placeholder.com/200x120?text=Carro+3"},
+];
+
+const carList = document.getElementById('carList');
+const selectCar = document.getElementById('selectCar');
+
+cars.forEach(car=>{
+let div = document.createElement('div');
+div.className = 'car';
+div.innerHTML = `<img src="${car.img}" alt="${car.name}"><h3>${car.name}</h3><p>${car.price}</p>`;
+carList.appendChild(div);
+
+let option = document.createElement('option');
+option.value = car.name;
+option.text = car.name;
+selectCar.add(option);
+});
+
+// Usuários
+let users = JSON.parse(localStorage.getItem('users') || '[]');
+
+function showRegister(){
+document.getElementById('loginDiv').classList.add('hidden');
+document.getElementById('registerDiv').classList.remove('hidden');
+}
+
+function showLogin(){
+document.getElementById('registerDiv').classList.add('hidden');
+document.getElementById('loginDiv').classList.remove('hidden');
+}
+
+function registerUser(){
+let name = document.getElementById('registerName').value;
+let email = document.getElementById('registerEmail').value;
+let password = document.getElementById('registerPassword').value;
+
+if(!name || !email || !password){
+document.getElementById('loginMessage').innerText = "Preencha todos os campos!";
+return;
+}
+if(users.find(u=>u.email===email)){
+document.getElementById('loginMessage').innerText = "Usuário já existe!";
+return;
+}
+
+users.push({name,email,password,reservations:[]});
+localStorage.setItem('users',JSON.stringify(users));
+document.getElementById('loginMessage').innerText = "Cadastro realizado! Faça login.";
+showLogin();
+}
+
+function loginUser(){
+let email = document.getElementById('loginEmail').value;
+let password = document.getElementById('loginPassword').value;
+
+let user = users.find(u=>u.email===email && u.password===password);
+if(!user){
+document.getElementById('loginMessage').innerText = "Email ou senha inválidos!";
+return;
+}
+document.getElementById('loginMessage').innerText = `Bem-vindo, ${user.name}!`;
+document.getElementById('reserveForm').classList.remove('hidden');
+}
+
+// Reservas
+function makeReservation(){
+let email = document.getElementById('loginEmail').value;
+let user = users.find(u=>u.email===email);
+
+let car = selectCar.value;
+let pickup = document.getElementById('pickupDate').value;
+let ret = document.getElementById('returnDate').value;
+
+if(!car || !pickup || !ret){
+document.getElementById('reserveMessage').innerText = "Preencha todos os campos!";
+return;
+}
+
+user.reservations.push({car,pickup,return:ret});
+localStorage.setItem('users',JSON.stringify(users));
+document.getElementById('reserveMessage').innerText = "Reserva realizada com sucesso!";
+}
+</script>
+
+</body>
+</html>
